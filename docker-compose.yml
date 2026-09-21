@@ -1,0 +1,38 @@
+version: "3.8" 
+
+services:
+  demand-forecast:
+    build:
+      context: ./demand-forecast
+      dockerfile: Dockerfile
+    container_name: demand-forecast-container
+    ports:
+      - "50052:50052"
+
+  inventory-server:
+    build:
+      context: ./inventory
+      dockerfile: Dockerfile
+    container_name: inventory-server-container
+    ports:
+      - "50051:50051"
+
+  inventory-api:
+    build:
+      context: ./api-rest
+      dockerfile: Dockerfile
+    container_name: inventory-api-container
+    network_mode: "host"
+    depends_on:
+      - demand-forecast
+      - inventory-server
+
+  inventory-web:
+    build:
+      context: ./web-app
+      dockerfile: Dockerfile
+    container_name: inventory-web-container
+    ports:
+      - "8080:80"
+    depends_on:
+      - inventory-api

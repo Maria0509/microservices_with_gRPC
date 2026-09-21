@@ -1,0 +1,45 @@
+// Arquivo: protobuf/inventory.proto
+// Descrição: Contrato gRPC para o serviço de otimização de inventário.
+// Contém as mensagens e RPCs usados pelo servidor Python `inventory/server.py`.
+syntax = "proto3";
+
+package inventory;
+
+// Serviço que expõe otimização por item e otimização em batch via streaming
+service InventoryOptimization {
+  rpc OptimizeInventory (InventoryRequest) returns (InventoryResponse);
+
+  // Server-streaming: recebe um batch e retorna múltiplas respostas
+  rpc OptimizeInventoryStream (InventoryBatchRequest) returns (stream InventoryResponse);
+}
+
+// Mensagem de requisição por item com parâmetros de estoque e previsão
+message InventoryRequest {
+  string item_id = 1;
+  int32 current_stock = 2;
+  int32 predicted_demand = 3;
+  int32 reorder_level = 4;
+  int32 safety_stock = 5;
+  int32 supplier_lead_time = 6;
+}
+
+// Batch para envio de múltiplos itens em uma única chamada
+message InventoryBatchRequest {
+  repeated InventoryRequest items = 1;
+}
+
+// Resposta com quantidade de reorder, ação recomendada e explicação
+message InventoryResponse {
+  string item_id = 1;
+  int32 reorder_quantity = 2;
+  InventoryAdjustmentAction inventory_adjustment_action = 3;
+  string explanation_message = 4;
+}
+
+// Enum com as ações possíveis que o serviço pode recomendar
+enum InventoryAdjustmentAction {
+  NO_ACTION = 0;
+  SCALE_UP = 1;
+  SCALE_DOWN = 2;
+  REORDER = 3;
+}

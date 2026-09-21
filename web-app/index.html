@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Recommendation System</title>
+
+    <!--
+        Arquivo: web-app/index.html
+        Descrição: Página frontend estática que envia dados ao API REST e apresenta
+        a recomendação de inventário. Este ficheiro é simples e serve apenas
+        como interface de demonstração local.
+    -->
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1f2937;
+        }
+
+        p {
+            text-align: center;
+            color: #555;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-top: 30px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #374151;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            display: none;
+        }
+
+        .error {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+            display: none;
+        }
+
+        .result h2 {
+            margin-top: 0;
+            color: #065f46;
+        }
+
+        .result-row {
+            margin: 8px 0;
+        }
+
+        strong {
+            color: #111827;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>Inventory Recommendation System</h1>
+    <p>Smart inventory recommendation using Demand Forecasting and Inventory Optimization microservices.</p>
+
+    <form id="recommendationForm">
+        <div class="form-grid">
+            <div>
+                <label for="item_id">Item ID</label>
+                <input type="text" id="item_id" value="ITEM001" required>
+            </div>
+
+            <div>
+                <label for="warehouse_id">Warehouse ID</label>
+                <input type="text" id="warehouse_id" value="WH001" required>
+            </div>
+
+            <div class="full-width">
+                <label for="historical_demand">Historical Demand Values</label>
+                <input type="text" id="historical_demand" value="40,45,50,55" required>
+            </div>
+
+            <div>
+                <label for="forecast_horizon">Forecast Horizon</label>
+                <input type="number" id="forecast_horizon" value="1" required>
+            </div>
+
+            <div>
+                <label for="current_stock">Current Stock</label>
+                <input type="number" id="current_stock" value="20" required>
+            </div>
+
+            <div>
+                <label for="reorder_level">Reorder Level</label>
+                <input type="number" id="reorder_level" value="10" required>
+            </div>
+
+            <div>
+                <label for="safety_stock">Safety Stock</label>
+                <input type="number" id="safety_stock" value="5" required>
+            </div>
+
+            <div>
+                <label for="supplier_lead_time">Supplier Lead Time</label>
+                <input type="number" id="supplier_lead_time" value="2" required>
+            </div>
+        </div>
+
+        <button type="submit">Generate Recommendation</button>
+    </form>
+
+    <div id="result" class="result">
+        <h2>Recommendation Result</h2>
+        <div class="result-row"><strong>Item ID:</strong> <span id="res_item_id"></span></div>
+        <div class="result-row"><strong>Warehouse ID:</strong> <span id="res_warehouse_id"></span></div>
+        <div class="result-row"><strong>Predicted Demand:</strong> <span id="res_predicted_demand"></span></div>
+        <div class="result-row"><strong>Forecast Confidence:</strong> <span id="res_forecast_confidence"></span></div>
+        <div class="result-row"><strong>Reorder Quantity:</strong> <span id="res_reorder_quantity"></span></div>
+        <div class="result-row"><strong>Inventory Action:</strong> <span id="res_action"></span></div>
+        <div class="result-row"><strong>Explanation:</strong> <span id="res_explanation"></span></div>
+    </div>
+
+    <div id="error" class="error"></div>
+</div>
+
+<script>
+    document.getElementById("recommendationForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const resultDiv = document.getElementById("result");
+        const errorDiv = document.getElementById("error");
+
+        resultDiv.style.display = "none";
+        errorDiv.style.display = "none";
+
+        const historicalDemandInput = document.getElementById("historical_demand").value;
+
+        const historicalDemand = historicalDemandInput
+            .split(",")
+            .map(value => parseInt(value.trim()))
+            .filter(value => !isNaN(value));
+
+        const requestBody = {
+            item_id: document.getElementById("item_id").value,
+            warehouse_id: document.getElementById("warehouse_id").value,
+            historical_demand: historicalDemand,
+            forecast_horizon: parseInt(document.getElementById("forecast_horizon").value),
+            current_stock: parseInt(document.getElementById("current_stock").value),
+            reorder_level: parseInt(document.getElementById("reorder_level").value),
+            safety_stock: parseInt(document.getElementById("safety_stock").value),
+            supplier_lead_time: parseInt(document.getElementById("supplier_lead_time").value)
+        };
+
+        try {
+            const response = await fetch("http://localhost:8000/recommendation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(JSON.stringify(data.detail, null, 2));
+            }
+
+            document.getElementById("res_item_id").textContent = data.item_id;
+            document.getElementById("res_warehouse_id").textContent = data.warehouse_id;
+            document.getElementById("res_predicted_demand").textContent = data.predicted_demand;
+            document.getElementById("res_forecast_confidence").textContent = data.forecast_confidence;
+            document.getElementById("res_reorder_quantity").textContent = data.reorder_quantity;
+            document.getElementById("res_action").textContent = data.inventory_adjustment_action;
+            document.getElementById("res_explanation").textContent = data.explanation_message;
+
+            resultDiv.style.display = "block";
+
+        } catch (error) {
+            errorDiv.textContent = "Error: " + error.message;
+            errorDiv.style.display = "block";
+        }
+    });
+</script>
+
+</body>
+</html>

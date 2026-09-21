@@ -1,0 +1,31 @@
+// Arquivo: protobuf/demand_forecast.proto
+// Descrição: Definições de contrato (Protocol Buffers) para o serviço de previsão de demanda.
+// Uso: define as mensagens e o serviço gRPC `DemandForecast` usado pelo microserviço Java.
+syntax = "proto3";
+
+package forecast;
+
+option java_multiple_files = true;
+option java_package = "com.iscf.forecast";
+option java_outer_classname = "DemandForecastProto";
+
+// Serviço gRPC expõe um método `PredictDemand` que recebe um histórico e retorna previsão
+service DemandForecast {
+  rpc PredictDemand (DemandForecastRequest) returns (DemandForecastResponse);
+}
+
+// Requisição de previsão: contém ID do item, histórico de demanda, horizonte e armazém
+message DemandForecastRequest {
+  string item_id = 1;
+  repeated int32 historical_demand = 2;
+  int32 forecast_horizon = 3;
+  string warehouse_id = 4;
+}
+
+// Resposta de previsão: demanda prevista, confiança (probabilidade/intervalo) e horizonte
+message DemandForecastResponse {
+  string item_id = 1;
+  int32 predicted_demand = 2;
+  double forecast_confidence = 3;
+  int32 forecast_horizon = 4;
+}

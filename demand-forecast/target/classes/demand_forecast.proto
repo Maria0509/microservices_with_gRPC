@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package forecast;
+
+option java_multiple_files = true;
+option java_package = "com.iscf.forecast";
+option java_outer_classname = "DemandForecastProto";
+
+service DemandForecast {
+  rpc PredictDemand (DemandForecastRequest) returns (DemandForecastResponse);
+}
+
+message DemandForecastRequest {
+  string item_id = 1;
+  repeated int32 historical_demand = 2;
+  int32 forecast_horizon = 3;
+  string warehouse_id = 4;
+}
+
+message DemandForecastResponse {
+  string item_id = 1;
+  int32 predicted_demand = 2;
+  double forecast_confidence = 3;
+  int32 forecast_horizon = 4;
+}
