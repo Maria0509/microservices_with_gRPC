@@ -1,4 +1,4 @@
-# ISCF Lab 3 - Run Instructions
+Run Instructions
 
 ## Requirements
 
